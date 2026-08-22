@@ -26,10 +26,40 @@ export async function discoverWebsites(input: { industry: string; location: stri
   if (!query) return { ok: false, message: "Add an industry, location, or keyword." }
 
   const count = Math.min(Math.max(Math.floor(input.resultCount || 10), 1), MAX_RESULTS)
-  const response = await fetch(`https://www.googleapis.com/customsearch/v1?key=${encodeURIComponent(apiKey)}&cx=${encodeURIComponent(engineId)}&q=${encodeURIComponent(query)}&num=${count}`, { cache: "no-store" })
-  if (!response.ok) return { ok: false, message: "Google Search failed. Check your API key, search engine ID, and quota." }
+  const endpoint = new URL("https://www.googleapis.com/customsearch/v1")
+  endpoint.searchParams.set("key", apiKey)
+  endpoint.searchParams.set("cx", engineId)
+  endpoint.searchParams.set("q", query)
+  endpoint.searchParams.set("num", String(count))
 
-  const data = (await response.json()) as { items?: Array<{ link?: string }> }
+  let response: Response
+  try {
+    response = await fetch(endpoint, { cache: "no-store" })
+  } catch {
+    return { ok: false, message: "Google Search could not be reached. Check the server connection and try again." }
+  }
+
+  const data = (await response.json().catch(() => ({}))) as {
+    items?: Array<{ link?: string }>
+    error?: { code?: number; message?: string; errors?: Array<{ reason?: string }> }
+  }
+
+  if (!response.ok) {
+    const reason = data.error?.errors?.[0]?.reason
+    if (data.error?.code === 400) {
+      return {
+        ok: false,
+        message: `Google rejected the request${data.error?.message ? `: ${data.error.message}` : ". Verify the Search Engine ID (CX) and that it searches the entire web."}`,
+      }
+    }
+    if (data.error?.code === 403 && reason === "dailyLimitExceeded") {
+      return { ok: false, message: "Google Custom Search daily quota has been reached." }
+    }
+    if (data.error?.code === 403) {
+      return { ok: false, message: "Google denied the request. Enable Custom Search JSON API for this API key and check its restrictions." }
+    }
+    return { ok: false, message: `Google Search failed${data.error?.message ? `: ${data.error.message}` : ". Check the API key and Search Engine ID."}` }
+  }
   const urls = Array.from(new Set((data.items ?? []).map((item) => normalizeUrl(item.link ?? "")).filter((url): url is string => Boolean(url))))
   if (!urls.length) return { ok: false, message: "No website results found. Try broader search terms." }
 
