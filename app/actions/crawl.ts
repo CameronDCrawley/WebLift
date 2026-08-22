@@ -5,7 +5,7 @@ import { revalidatePath } from "next/cache"
 import { db } from "@/lib/db"
 import { crawlSites, crawlRuns } from "@/lib/db/schema"
 import { analyzePage } from "@/lib/crawler/analyze"
-import { isAllowed } from "@/lib/crawler/robots"
+import { getBlockReason } from "@/lib/crawler/robots"
 
 const MAX_LINKS_PER_PAGE = 25
 const MAX_BATCH = 20
@@ -105,10 +105,15 @@ async function enqueueLinks(
 
   if (candidates.length === 0) return 0
 
-  const checked = await mapLimit(candidates, CONCURRENCY, async (candidate) =>
-    (await isAllowed(candidate.url)) ? candidate : null,
-  )
-  const allowed = checked.filter((c) => c !== null)
+  const checked = await mapLimit(candidates, CONCURRENCY, async (candidate) => ({
+    candidate,
+    reason: await getBlockReason(candidate.url),
+  }))
+  const blocked = checked.filter(({ reason }) => reason)
+  if (blocked.length > 0) {
+    await db.insert(crawlSites).values(blocked.map(({ candidate, reason }) => ({ ...candidate, status: "blocked" as const, blockReason: reason }))).onConflictDoNothing()
+  }
+  const allowed = checked.filter(({ reason }) => !reason).map(({ candidate }) => candidate)
   if (allowed.length === 0) return 0
 
   const inserted = await db
@@ -215,7 +220,8 @@ export async function processQueue(opts: {
     .from(crawlSites)
     .where(and(eq(crawlSites.status, "pending"), lte(crawlSites.depth, maxDepth)))
 
-  await db.update(crawlRuns).set({ finishedAt: new Date(), processedCount: processed, discoveredCount: discovered, status: stoppedEarly ? "partial" : "complete" }).where(eq(crawlRuns.id, run.id))
+  const [blockedRow] = await db.select({ n: count() }).from(crawlSites).where(eq(crawlSites.status, "blocked"))
+  await db.update(crawlRuns).set({ finishedAt: new Date(), processedCount: processed, discoveredCount: discovered, blockedCount: Number(blockedRow?.n ?? 0), status: stoppedEarly ? "partial" : "complete" }).where(eq(crawlRuns.id, run.id))
   revalidatePath("/")
   return {
     processed,

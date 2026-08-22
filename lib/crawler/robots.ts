@@ -53,17 +53,20 @@ function parseRobots(text: string): string[] {
   return disallow.length ? disallow : starRules
 }
 
-export async function isAllowed(url: string): Promise<boolean> {
+export async function getBlockReason(url: string): Promise<string | null> {
   try {
     const u = new URL(url)
     const rules = await getDisallowRules(u.origin)
     const path = u.pathname + u.search
     for (const rule of rules) {
-      if (rule === "/") return false
-      if (rule && path.startsWith(rule)) return false
+      if (rule === "/" || (rule && path.startsWith(rule))) return `Blocked by robots.txt (${rule})`
     }
-    return true
+    return null
   } catch {
-    return true
+    return null
   }
+}
+
+export async function isAllowed(url: string): Promise<boolean> {
+  return (await getBlockReason(url)) === null
 }

@@ -161,10 +161,30 @@ export async function analyzePage(url: string): Promise<PageAnalysis> {
 
     if (!isHttps) add("no-https", "Site is not served over HTTPS", "seo", "high")
 
-    // ---------- Outdated tech / design signals ----------
+    // ---------- Responsive design, readability, and accessibility ----------
     const viewport = $('meta[name="viewport"]').attr("content")
-    if (!viewport)
-      add("no-viewport", "No responsive viewport meta (not mobile-friendly)", "design", "high")
+    if (!viewport) add("no-viewport", "No responsive viewport (not mobile-friendly)", "design", "high")
+    else if (!/width\s*=\s*device-width/i.test(viewport) || /user-scalable\s*=\s*no/i.test(viewport))
+      add("weak-viewport", "Viewport limits responsive/mobile behavior", "design", "medium")
+
+    const bodyText = $("body").text().replace(/\s+/g, " ").trim()
+    const textBlocks = $("p, li, h1, h2, h3, article").length
+    const tinyText = $("body *").filter((_, el) => {
+      const style = ($(el).attr("style") ?? "").toLowerCase()
+      return /font-size\s*:\s*(8|9|10|11|12)px/.test(style)
+    }).length
+    if (bodyText.length < 120 || textBlocks === 0) add("low-readable-content", "Very little readable page content", "design", "medium")
+    if (tinyText > 2) add("tiny-text", "Inline styles suggest hard-to-read small text", "design", "medium")
+
+    const interactive = $("a, button, input, select, textarea").length
+    const unlabeled = $("a, button, input, select, textarea").filter((_, el) => {
+      const $el = $(el)
+      return !$el.attr("aria-label") && !$el.attr("aria-labelledby") && !$el.text().trim() && !$el.attr("title")
+    }).length
+    if (interactive > 0 && unlabeled / interactive > 0.2) add("unlabeled-controls", "Interactive controls lack accessible labels", "design", "high")
+    if (imgs.length > 0 && imgsNoAlt / imgs.length > 0.1) add("img-no-alt", "Images missing alternative text", "design", "high")
+
+    // ---------- Outdated technology signals ----------
 
     // Layout tables: tables that are large / contain other tables are a strong signal
     let layoutTable = false
@@ -220,9 +240,10 @@ export async function analyzePage(url: string): Promise<PageAnalysis> {
     // ---------- Scores ----------
     const seoScore = scoreCategory(issues, "seo")
     const designScore = scoreCategory(issues, "design")
-    const readabilityScore = Math.min(100, (issues.filter((i) => ["no-title", "no-h1", "no-meta-description"].includes(i.code)).length * 25))
-    const accessibilityScore = Math.min(100, (issues.filter((i) => ["img-no-alt", "no-lang", "no-viewport"].includes(i.code)).length * 30))
-    const overallScore = Math.round(seoScore * 0.35 + designScore * 0.35 + readabilityScore * 0.15 + accessibilityScore * 0.15)
+    const readabilityScore = Math.min(100, issues.filter((i) => ["no-title", "no-h1", "no-meta-description", "low-readable-content", "tiny-text"].includes(i.code)).reduce((sum, issue) => sum + SEVERITY_POINTS[issue.severity], 0))
+    const accessibilityScore = Math.min(100, issues.filter((i) => ["img-no-alt", "no-lang", "unlabeled-controls"].includes(i.code)).reduce((sum, issue) => sum + SEVERITY_POINTS[issue.severity], 0))
+    const responsiveScore = Math.min(100, issues.filter((i) => ["no-viewport", "weak-viewport"].includes(i.code)).reduce((sum, issue) => sum + SEVERITY_POINTS[issue.severity], 0))
+    const overallScore = Math.round(seoScore * 0.25 + designScore * 0.25 + responsiveScore * 0.2 + readabilityScore * 0.15 + accessibilityScore * 0.15)
 
     // ---------- Link extraction ----------
     const links = new Set<string>()
