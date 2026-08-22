@@ -23,7 +23,10 @@ export type PageAnalysis = {
   issues: Issue[]
   seoScore: number
   designScore: number
+  readabilityScore: number
+  accessibilityScore: number
   overallScore: number
+  blockedReason?: string
   links: string[]
   error?: string
 }
@@ -113,6 +116,8 @@ export async function analyzePage(url: string): Promise<PageAnalysis> {
         issues: [],
         seoScore: 0,
         designScore: 0,
+        readabilityScore: 0,
+        accessibilityScore: 0,
         overallScore: 0,
         links: [],
         error: httpStatus >= 400 ? `HTTP ${httpStatus}` : "No HTML content",
@@ -215,7 +220,9 @@ export async function analyzePage(url: string): Promise<PageAnalysis> {
     // ---------- Scores ----------
     const seoScore = scoreCategory(issues, "seo")
     const designScore = scoreCategory(issues, "design")
-    const overallScore = Math.round(seoScore * 0.45 + designScore * 0.55)
+    const readabilityScore = Math.min(100, (issues.filter((i) => ["no-title", "no-h1", "no-meta-description"].includes(i.code)).length * 25))
+    const accessibilityScore = Math.min(100, (issues.filter((i) => ["img-no-alt", "no-lang", "no-viewport"].includes(i.code)).length * 30))
+    const overallScore = Math.round(seoScore * 0.35 + designScore * 0.35 + readabilityScore * 0.15 + accessibilityScore * 0.15)
 
     // ---------- Link extraction ----------
     const links = new Set<string>()
@@ -233,6 +240,8 @@ export async function analyzePage(url: string): Promise<PageAnalysis> {
       issues,
       seoScore,
       designScore,
+      readabilityScore,
+      accessibilityScore,
       overallScore,
       links: Array.from(links),
     }

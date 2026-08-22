@@ -3,7 +3,7 @@
 import { and, count, desc, eq, gte, isNotNull, lte, sql } from "drizzle-orm"
 import { revalidatePath } from "next/cache"
 import { db } from "@/lib/db"
-import { crawlSites } from "@/lib/db/schema"
+import { crawlSites, crawlRuns } from "@/lib/db/schema"
 import { analyzePage } from "@/lib/crawler/analyze"
 import { isAllowed } from "@/lib/crawler/robots"
 
@@ -130,6 +130,7 @@ export async function processQueue(opts: {
   const followExternal = opts.followExternal ?? true
   const deadline = Date.now() + RUN_TIME_BUDGET_MS
 
+  const [run] = await db.insert(crawlRuns).values({ requestedCount: batchSize }).returning({ id: crawlRuns.id })
   let processed = 0
   let discovered = 0
   let stoppedEarly = false
@@ -184,8 +185,11 @@ export async function processQueue(opts: {
           overallScore: analysis.overallScore,
           seoScore: analysis.seoScore,
           designScore: analysis.designScore,
+          readabilityScore: analysis.readabilityScore,
+          accessibilityScore: analysis.accessibilityScore,
           issues: analysis.issues,
           error: analysis.error ?? null,
+          blockReason: analysis.error && analysis.httpStatus !== null ? analysis.error : null,
           analyzedAt: new Date(),
         })
         .where(eq(crawlSites.id, site.id))
@@ -211,6 +215,7 @@ export async function processQueue(opts: {
     .from(crawlSites)
     .where(and(eq(crawlSites.status, "pending"), lte(crawlSites.depth, maxDepth)))
 
+  await db.update(crawlRuns).set({ finishedAt: new Date(), processedCount: processed, discoveredCount: discovered, status: stoppedEarly ? "partial" : "complete" }).where(eq(crawlRuns.id, run.id))
   revalidatePath("/")
   return {
     processed,
@@ -253,6 +258,10 @@ export async function getLeads(minScore = 0) {
     )
     .orderBy(desc(crawlSites.overallScore), desc(crawlSites.analyzedAt))
     .limit(200)
+}
+
+export async function getCrawlHistory() {
+  return db.select().from(crawlRuns).orderBy(desc(crawlRuns.startedAt)).limit(20)
 }
 
 export async function resetCrawl() {

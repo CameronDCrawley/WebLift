@@ -1,5 +1,6 @@
 import { Radar } from "lucide-react"
-import { getStats, getLeads } from "@/app/actions/crawl"
+import { getStats, getLeads, getCrawlHistory } from "@/app/actions/crawl"
+import { CrawlHistory } from "@/components/dashboard/crawl-history"
 import { CrawlConsole } from "@/components/dashboard/crawl-console"
 import { StatCards } from "@/components/dashboard/stat-cards"
 import { LeadsTable } from "@/components/dashboard/leads-table"
@@ -7,7 +8,7 @@ import { LeadsTable } from "@/components/dashboard/leads-table"
 export const dynamic = "force-dynamic"
 
 export default async function Page() {
-  const [stats, leads] = await Promise.all([getStats(), getLeads()])
+  const [stats, leads, history] = await Promise.all([getStats(), getLeads(), getCrawlHistory()])
 
   return (
     <main className="mx-auto flex min-h-svh w-full max-w-6xl flex-col gap-8 px-4 py-8 md:px-6 md:py-12">
@@ -27,6 +28,7 @@ export default async function Page() {
       </header>
 
       <StatCards stats={stats} />
+      <CrawlHistory runs={history} />
 
       <div className="grid gap-6 lg:grid-cols-[minmax(0,360px)_1fr]">
         <div className="lg:sticky lg:top-8 lg:self-start">
