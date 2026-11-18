@@ -1,33 +1,60 @@
 # WebLift
+**Website modernization scanner** — Crawl the web from seed URLs and automatically score each site on outdated design and SEO signals to identify your best modernization leads.
 
-This is a [Next.js](https://nextjs.org) project bootstrapped with [v0](https://v0.app).
+## Live Demo
+https://scope-opal-chi.vercel.app/
 
-## Built with v0
+## Features
 
-This repository is linked to a [v0](https://v0.app) project. You can continue developing by visiting the link below -- start new chats to make changes, and v0 will push commits directly to this repo. Every merge to `main` will automatically deploy.
+* **Automated Web Crawling:** Feed seed URLs (single or comma-separated) and let the crawler traverse and discover connected pages.
+* **Modernization Scoring:** Automatically evaluates sites against outdated design heuristics and SEO optimization criteria.
+* **Priority Lead Generation:** Ranks discovered sites by score to highlight high-potential modernization targets.
+* **Configurable Crawl Scope:** Toggle external domain following to stay within seed domains or cast a wider net.
 
-[Continue working on v0 →](https://v0.app/chat/projects/prj_0BdCCtP5AlnBqRwxfcygoskMF4Jh)
+---
 
-## Getting Started
+## Tech Stack
 
-First, run the development server:
+* **Frontend:** EJS, Tailwind CSS, JavaScript
+* **Backend:** Node.js, Express.js
+* **Data & Crawling:** Asynchronous web crawling queue, seed URL parsing, and scoring algorithms
+* **Hosting & Deployment:** Render & Vercel
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
+---
+
+## Environment Setup
+
+Create a `.env` file in the root directory with the following configuration:
+
+```env
+PORT=3000
+DB_STRING=your_mongodb_connection_string_here
+
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+---
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Quick Start
 
-## Learn More
+1. Clone the repository:
+```bash
+git clone https://github.com/your-username/scope.git
+cd scope
 
-To learn more, take a look at the following resources:
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-- [v0 Documentation](https://v0.app/docs) - learn about v0 and how to use it.
+
+2. Install dependencies:
+```bash
+npm install
+
+```
+
+
+3. Run the development server:
+```bash
+npm start
+
+```
+
+
