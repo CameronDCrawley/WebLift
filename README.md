@@ -11,7 +11,7 @@ https://scope-opal-chi.vercel.app/
 * **Priority Lead Generation:** Ranks discovered sites by score to highlight high-potential modernization targets.
 * **Configurable Crawl Scope:** Toggle external domain following to stay within seed domains or cast a wider net.
 
----
+
 
 ## Tech Stack
 
@@ -21,7 +21,7 @@ https://scope-opal-chi.vercel.app/
 - **Styling & UI Components:** Tailwind CSS v4, shadcn/ui, Base UI (`@base-ui/react`), Lucide React, `next-themes`, Sonner
 - **Deployment & Tooling:** Vercel Analytics, pnpm, ESLint
 
----
+
 
 ## Environment Setup
 
@@ -33,7 +33,6 @@ DB_STRING=your_mongodb_connection_string_here
 
 ```
 
----
 
 ## Quick Start
 
