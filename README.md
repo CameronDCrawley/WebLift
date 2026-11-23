@@ -15,10 +15,11 @@ https://scope-opal-chi.vercel.app/
 
 ## Tech Stack
 
-* **Frontend:** EJS, Tailwind CSS, JavaScript
-* **Backend:** Node.js, Express.js
-* **Data & Crawling:** Asynchronous web crawling queue, seed URL parsing, and scoring algorithms
-* **Hosting & Deployment:** Render & Vercel
+* ****Framework & Language:** Next.js 16 (App Router / Full-Stack), React 19, TypeScript
+- **Database & ORM:** PostgreSQL (`pg`), Drizzle ORM
+- **Web Scraping & Crawling:** Cheerio (paired with `scripts/scan.ts`)
+- **Styling & UI Components:** Tailwind CSS v4, shadcn/ui, Base UI (`@base-ui/react`), Lucide React, `next-themes`, Sonner
+- **Deployment & Tooling:** Vercel Analytics, pnpm, ESLint
 
 ---
 
