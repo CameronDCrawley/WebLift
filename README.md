@@ -15,7 +15,7 @@ https://scope-opal-chi.vercel.app/
 
 ## Tech Stack
 
-* ****Framework & Language:** Next.js 16 (App Router / Full-Stack), React 19, TypeScript
+- **Framework & Language:** Next.js 16 (App Router / Full-Stack), React 19, TypeScript
 - **Database & ORM:** PostgreSQL (`pg`), Drizzle ORM
 - **Web Scraping & Crawling:** Cheerio (paired with `scripts/scan.ts`)
 - **Styling & UI Components:** Tailwind CSS v4, shadcn/ui, Base UI (`@base-ui/react`), Lucide React, `next-themes`, Sonner
